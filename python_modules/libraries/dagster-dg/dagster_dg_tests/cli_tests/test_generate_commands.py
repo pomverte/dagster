@@ -290,7 +290,7 @@ def test_generate_sling_replication_instance() -> None:
         assert "source: " in replication_path.read_text()
 
 
-dbt_project_path = "../code_locations/dbt_project_location/components/jaffle_shop"
+dbt_project_path = "../stub_code_locations/dbt_project_location/components/jaffle_shop"
 
 
 @pytest.mark.parametrize(
@@ -322,6 +322,6 @@ def test_generate_dbt_project_instance(params) -> None:
         assert component_yaml_path.exists()
         assert "type: dagster_components.dbt_project" in component_yaml_path.read_text()
         assert (
-            "code_locations/dbt_project_location/components/jaffle_shop"
+            "stub_code_locations/dbt_project_location/components/jaffle_shop"
             in component_yaml_path.read_text()
         )

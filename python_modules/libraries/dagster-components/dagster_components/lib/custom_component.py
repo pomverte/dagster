@@ -20,37 +20,6 @@ from dagster_components.generate import generate_custom_component_yaml
 if TYPE_CHECKING:
     from dagster._core.definitions.definitions_class import Definitions
 
-CUSTOM_COMPONENT_TEMPLATE = '''from dagster import Definitions
-from dagster_components import ComponentLoadContext, component
-from dagster_components.core.component_decl_builder import ComponentDeclNode, YamlComponentDecl
-from dagster_components.lib.custom_component import CustomComponent
-from pydantic import BaseModel, TypeAdapter
-
-
-class {class_name}Params(BaseModel): ...
-
-
-@component(name="{custom_component_type_name}")
-class {class_name}(CustomComponent):
-    """Write a description of your component here."""
-    params_schema = {class_name}Params
-
-    def build_defs(self, context: ComponentLoadContext) -> Definitions:
-        return Definitions()
-
-    @classmethod
-    def from_decl_node(
-        cls, context: "ComponentLoadContext", decl_node: "ComponentDeclNode"
-    ) -> "{class_name}":
-        assert isinstance(decl_node, YamlComponentDecl)
-        loaded_params = TypeAdapter(cls.params_schema).validate_python(
-            decl_node.component_file_model.params
-        )
-        assert loaded_params  # silence linter complaints
-        return {class_name}()
-
-'''
-
 
 def custom_component_template():
     from dagster import Definitions
