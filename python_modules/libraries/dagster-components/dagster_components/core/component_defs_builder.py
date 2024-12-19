@@ -41,13 +41,17 @@ def load_module_from_path(module_name, path) -> ModuleType:
 
 def load_components_from_context(context: ComponentLoadContext) -> Sequence[Component]:
     if isinstance(context.decl_node, YamlComponentDecl):
-        component_type = component_type_from_yaml_decl(context.registry, context.decl_node)
+        component_type = component_type_from_yaml_decl(
+            context.registry, context.decl_node
+        )
         context = context.with_rendering_scope(component_type.get_rendering_scope())
         return [component_type.load(context)]
     elif isinstance(context.decl_node, ComponentFolder):
         components = []
         for sub_decl in context.decl_node.sub_decls:
-            components.extend(load_components_from_context(context.for_decl_node(sub_decl)))
+            components.extend(
+                load_components_from_context(context.for_decl_node(sub_decl))
+            )
         return components
 
     raise NotImplementedError(f"Unknown component type {context.decl_node}")
@@ -64,7 +68,9 @@ def component_type_from_yaml_decl(
         for py_file in decl_node.path.glob("*.py"):
             module_name = py_file.stem
 
-            module = load_module_from_path(module_name, decl_node.path / f"{module_name}.py")
+            module = load_module_from_path(
+                module_name, decl_node.path / f"{module_name}.py"
+            )
 
             for _name, obj in inspect.getmembers(module, inspect.isclass):
                 assert isinstance(obj, Type)
@@ -106,7 +112,9 @@ def build_defs_from_component_path(
         templated_value_resolver=TemplatedValueResolver.default(),
     )
     components = load_components_from_context(context)
-    return defs_from_components(resources=resources, context=context, components=components)
+    return defs_from_components(
+        resources=resources, context=context, components=components
+    )
 
 
 @suppress_dagster_warnings
@@ -119,7 +127,13 @@ def defs_from_components(
     from dagster._core.definitions.definitions_class import Definitions
 
     return Definitions.merge(
-        *[*[c.build_defs(context) for c in components], Definitions(resources=resources)]
+        *[
+            *[
+                c.build_defs(context.with_rendering_scope(c.get_rendering_scope()))
+                for c in components
+            ],
+            Definitions(resources=resources),
+        ]
     )
 
 
