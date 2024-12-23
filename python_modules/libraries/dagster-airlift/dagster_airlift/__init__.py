@@ -1,5 +1,11 @@
-from dagster._core.libraries import DagsterLibraryRegistry
+import pkg_resources
 
 from dagster_airlift.version import __version__
 
-DagsterLibraryRegistry.register("dagster-azure", __version__)
+is_dagster_installed = "dagster" in {pkg.key for pkg in pkg_resources.working_set}
+# In the case of running CI/CD, where we have Dagster installed in the environment, we want to be able to register the library in our library registry. But we want
+# to avoid taking an actual dependency on Dagster, so we need to gate this behind a check for the presence of the Dagster package in the environment.
+if is_dagster_installed:
+    from dagster._core.libraries import DagsterLibraryRegistry
+
+    DagsterLibraryRegistry.register("dagster-airlift", __version__)
