@@ -815,3 +815,10 @@ def only_allow_hidden_params_in_kwargs(annotatable: Annotatable, kwargs: Mapping
             deprecated_params[param].hidden,
             f"Unexpected non-hidden deprecated parameter '{param}' in kwargs. Should never get here.",
         )
+
+
+# placeholder
+beta = experimental
+beta_param = experimental_param
+alpha = experimental
+alpha_param = experimental_param
