@@ -822,3 +822,7 @@ beta = experimental
 beta_param = experimental_param
 alpha = experimental
 alpha_param = experimental_param
+
+# placeholder
+confirmed_deprecated = deprecated
+confirmed_deprecated_param = deprecated_param
