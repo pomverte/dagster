@@ -8,6 +8,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Callable, Generator, List, Optional
 
+import psutil
 import pytest
 import requests
 from dagster._core.test_utils import environ
@@ -100,8 +101,9 @@ def stand_up_airflow(
         assert airflow_ready, "Airflow did not start within 30 seconds..."
         yield process
     finally:
-        # Kill process group, since process.kill and process.terminate do not work.
-        os.killpg(process.pid, signal.SIGKILL)
+        if psutil.Process(pid=process.pid).is_running():
+            # Kill process group, since process.kill and process.terminate do not work.
+            os.killpg(process.pid, signal.SIGKILL)
 
 
 @pytest.fixture(name="airflow_instance")
@@ -179,7 +181,9 @@ def stand_up_dagster(
         assert dagster_ready, "Dagster did not start within 30 seconds..."
         yield process
     finally:
-        os.killpg(process.pid, signal.SIGKILL)
+        if psutil.Process(pid=process.pid).is_running():
+            # Kill process group, since process.kill and process.terminate do not work.
+            os.killpg(process.pid, signal.SIGKILL)
 
 
 ####################################################################################################
