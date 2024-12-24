@@ -8,9 +8,15 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "subnets" {
-  description = "List of subnets for ECS tasks."
+variable "subnet_ids" {
+  description = "List of subnet ids for the ECS task."
   type        = list(string)
+}
+
+variable "assign_public_ip" {
+  description = "Whether to assign a public IP to the ECS tasks. Warning: this might will expose the tasks to the internet."
+  type        = bool
+  default     = true
 }
 
 variable "ecs_cluster_id" {

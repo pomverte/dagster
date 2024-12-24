@@ -54,7 +54,7 @@ resource "aws_ecs_task_definition" "dagster_daemon" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group"         = var.log_group
+          "awslogs-group"         = local.log_group
           "awslogs-region"        = var.region
           "awslogs-stream-prefix" = "dagster-daemon"
         }
@@ -81,8 +81,11 @@ resource "aws_ecs_service" "dagster_daemon" {
   task_definition = aws_ecs_task_definition.dagster_daemon.arn
 
   network_configuration {
-    subnets          = var.subnets
+    subnets          = var.daemon_subnet_ids
     security_groups  = [aws_security_group.dagster.id]
+    # when running in public subnet, consider setting assign_public_ip = true
+    # however, this is not recommended for production as it exposes the container to the internet
+    assign_public_ip = var.create_lb ? true : var.assign_public_ip
   }
 
   force_new_deployment = true
@@ -106,7 +109,7 @@ resource "aws_ecs_task_definition" "dagster_webserver" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          "awslogs-group"         = var.log_group
+          "awslogs-group"         = local.log_group
           "awslogs-region"        = var.region
           "awslogs-stream-prefix" = "dagster-webserver"
         }
@@ -133,39 +136,6 @@ resource "aws_ecs_task_definition" "dagster_webserver" {
   ])
 }
 
-resource "aws_lb" "dagster_webserver" {
-  name               = "dagster-webserver-lb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.dagster.id]
-  subnets            = var.subnets
-}
-
-resource "aws_lb_target_group" "dagster_webserver" {
-  name        = "dagster-webserver-tg"
-  port        = 80
-  protocol    = "HTTP"
-  target_type = "ip"
-  vpc_id      = var.vpc_id
-  health_check {
-    path                = "/"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200-399"
-  }
-}
-
-resource "aws_lb_listener" "dagster_webserver" {
-  load_balancer_arn = aws_lb.dagster_webserver.arn
-  port              = 80
-  protocol          = "HTTP"
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.dagster_webserver.arn
-  }
-}
 
 resource "aws_ecs_service" "dagster-webserver" {
   name            = "dagster-webserver"
@@ -175,17 +145,20 @@ resource "aws_ecs_service" "dagster-webserver" {
   task_definition = aws_ecs_task_definition.dagster_webserver.arn
 
   network_configuration {
-    subnets          = var.subnets
+    subnets          = var.webserver_subnet_ids
     security_groups  = [aws_security_group.dagster.id]
-    # when running in publio subnet, consider setting assign_public_ip = true
+    # when running in public subnet, consider setting assign_public_ip = true
     # however, this is not recommended for production as it exposes the container to the internet
-    # assign_public_ip = true
+    assign_public_ip = var.create_lb ? true : var.assign_public_ip
   }
 
-  load_balancer {
-    target_group_arn = aws_lb_target_group.dagster_webserver.arn
-    container_name   = "dagster-webserver"
-    container_port   = 80
+  dynamic "load_balancer" {
+    for_each = var.create_lb ? [1] : []
+    content {
+      target_group_arn = local.lb_target_group_arn
+      container_name   = "dagster-webserver"
+      container_port   = 80
+    }
   }
 
   force_new_deployment = true

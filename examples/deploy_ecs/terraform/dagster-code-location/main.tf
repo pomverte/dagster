@@ -107,9 +107,9 @@ resource "aws_ecs_service" "code_location" {
   deployment_minimum_healthy_percent = 0
 
   network_configuration {
-    subnets          = var.subnets
+    subnets          = var.subnet_ids
     security_groups  = [aws_security_group.code_location.id]
-    assign_public_ip = true
+    assign_public_ip = var.assign_public_ip
   }
 
   service_registries {

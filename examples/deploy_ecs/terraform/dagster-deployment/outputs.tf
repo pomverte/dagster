@@ -12,3 +12,8 @@ output "execution_role_arn" {
   description = "Execution ARN Name for Dagster"
   value       = local.execution_role_arn
 }
+
+output "log_group_name" {
+  description = "CloudWatch log group name for Dagster"
+  value       = local.log_group
+}
